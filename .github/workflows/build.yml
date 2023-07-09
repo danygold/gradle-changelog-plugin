@@ -2,7 +2,7 @@ name: Build
 on:
   # Trigger the workflow on pushes to only the 'main' branch (this avoids duplicate checks being run e.g. for dependabot pull requests)
   push:
-    branches: [main]
+    branches: [test/crlf_wrong_render]
     paths-ignore: ['**.md']
   pull_request:
     paths-ignore: ['**.md']
@@ -129,45 +129,3 @@ jobs:
 
       - name: Build Plugin
         run: ./gradlew build -x test
-
-      # Store already-built plugin as an artifact for downloading
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ steps.properties.outputs.artifact }}
-          path: ./build/libs/${{ steps.properties.outputs.artifact }}
-
-  # Prepare a draft release for GitHub Releases page for the manual verification
-  # If accepted and published, release workflow would be triggered
-  releaseDraft:
-    name: Release Draft
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-
-      # Check out current repository
-      - name: Fetch Sources
-        uses: actions/checkout@v3
-
-      # Remove old release drafts by using the curl request for the available releases with draft flag
-      - name: Remove Old Release Drafts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/{owner}/{repo}/releases \
-            --jq '.[] | select(.draft == true) | .id' \
-            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
-
-      # Create new release draft - which is not publicly visible and requires manual acceptance
-      - name: Create Release Draft
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create v${{ needs.build.outputs.version }} \
-            --draft \
-            --title "v${{ needs.build.outputs.version }}" \
-            --notes "$(cat << 'EOM'
-          ${{ needs.build.outputs.changelog }}
-          EOM
-          )"
