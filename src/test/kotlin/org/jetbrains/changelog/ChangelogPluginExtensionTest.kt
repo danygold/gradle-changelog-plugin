@@ -643,7 +643,55 @@ class ChangelogPluginExtensionTest : BaseTest() {
     }
 
     @Test
-    fun `returns change notes for the v1_0_0 version of changelog that use CRLF`() {
+    fun `returns change notes for the v1_0_0 version of changelog that use CRLF (HTML)`() {
+        changelog =
+            """
+            # Changelog
+            Project description.
+            Multiline description:
+            - item 1
+            - item 2
+            
+            ## [Unreleased]
+            Not yet released version.
+            
+            ### Added
+            - Foo
+            
+            ## [1.0.0]
+            First release.
+            
+            ### Added
+            - Test [link](https://www.example.org) test
+            
+            ### Removed
+            - Bar
+            
+            [Unreleased]: https://blog.jetbrains.com
+            [1.0.0]: https://jetbrains.com
+            """.trimIndent().replace("\n", "\r\n")
+
+        extension.get(version).apply {
+            assertEquals(project.version, version)
+
+            assertHTML(
+                """
+                <h2><a href="https://jetbrains.com">1.0.0</a></h2>
+                <p>First release.</p>
+
+                <h3>Added</h3>
+                <ul><li>Test <a href="https://www.example.org">link</a> test</li></ul>
+
+                <h3>Removed</h3>
+                <ul><li>Bar</li></ul>
+                """.trimIndent().replace("\n", "\r\n"),
+                extension.renderItem(this, Changelog.OutputType.HTML)
+            )
+        }
+    }
+
+    @Test
+    fun `returns change notes for the v1_0_0 version of changelog that use CRLF (PlainText)`() {
         changelog =
             """
             # Changelog
@@ -676,36 +724,6 @@ class ChangelogPluginExtensionTest : BaseTest() {
 
             assertMarkdown(
                 """
-                ## [1.0.0]
-                First release.
-
-                ### Added
-                - Test [link](https://www.example.org) test
-
-                ### Removed
-                - Bar
-
-                [1.0.0]: https://jetbrains.com
-                """.trimIndent().replace("\n", "\r\n"),
-                extension.renderItem(this)
-            )
-
-            assertHTML(
-                """
-                <h2><a href="https://jetbrains.com">1.0.0</a></h2>
-                <p>First release.</p>
-
-                <h3>Added</h3>
-                <ul><li>Test <a href="https://www.example.org">link</a> test</li></ul>
-
-                <h3>Removed</h3>
-                <ul><li>Bar</li></ul>
-                """.trimIndent().replace("\n", "\r\n"),
-                extension.renderItem(this, Changelog.OutputType.HTML)
-            )
-
-            assertMarkdown(
-                """
                 1.0.0
                 First release.
                 
@@ -721,8 +739,7 @@ class ChangelogPluginExtensionTest : BaseTest() {
     }
 
     @Test
-    @Suppress("LongMethod", "MaxLineLength")
-    fun `render changelog that use CRLF`() {
+    fun `render changelog that use CRLF (Markdown)`() {
         changelog =
             """
             # Changelog
@@ -802,6 +819,50 @@ class ChangelogPluginExtensionTest : BaseTest() {
                 """.trimIndent().replace("\n", "\r\n"),
                 extension.render(Changelog.OutputType.MARKDOWN)
             )
+        }
+    }
+
+    @Test
+    fun `render changelog that use CRLF (HTML)`() {
+        changelog =
+            """
+            # Changelog
+            My project description.
+            
+            ## [1.1.0]
+            First release.
+            
+            But a great one.
+            
+            ### Added
+            - Foo *FOO* foo
+            - Bar **BAR** bar
+            - Test [link](https://www.example.org) test
+            - Code `block` code
+            - Bravo
+            - Alpha
+            
+            ### Fixed
+            - Hello
+            - World
+            
+            ### Removed
+            - Hola
+            
+            ## [1.0.0]
+            
+            ### Added
+            - Foo 1.0.0
+            - Bar 1.0.0
+            
+            ### Removed
+            - Removed 1.0.0
+            
+            [1.1.0]: https://jetbrains.com/1.1.0
+            [1.0.0]: https://jetbrains.com/1.0.0
+            """.trimIndent().replace("\n", "\r\n")
+
+        extension.get(version).apply {
             assertHTML(
                 """
                 <h1>Changelog</h1>
@@ -831,6 +892,52 @@ class ChangelogPluginExtensionTest : BaseTest() {
                 """.trimIndent().replace("\n", "\r\n"),
                 extension.render(Changelog.OutputType.HTML)
             )
+
+        }
+    }
+
+    @Test
+    fun `render changelog that use CRLF (PlainText)`() {
+        changelog =
+            """
+            # Changelog
+            My project description.
+            
+            ## [1.1.0]
+            First release.
+            
+            But a great one.
+            
+            ### Added
+            - Foo *FOO* foo
+            - Bar **BAR** bar
+            - Test [link](https://www.example.org) test
+            - Code `block` code
+            - Bravo
+            - Alpha
+            
+            ### Fixed
+            - Hello
+            - World
+            
+            ### Removed
+            - Hola
+            
+            ## [1.0.0]
+            
+            ### Added
+            - Foo 1.0.0
+            - Bar 1.0.0
+            
+            ### Removed
+            - Removed 1.0.0
+            
+            [1.1.0]: https://jetbrains.com/1.1.0
+            [1.0.0]: https://jetbrains.com/1.0.0
+            """.trimIndent().replace("\n", "\r\n")
+
+        extension.get(version).apply {
+
             assertMarkdown(
                 """
                 Changelog
